@@ -20,7 +20,7 @@ CircularController::CircularController(mc_rbdyn::RobotModulePtr rm, double dt, c
   solver().addConstraintSet(dynamicsConstraint);
 
   R_=0.15;
-  omega_= 2;
+  omega_= 3;
 
   postureTask = std::make_shared<mc_tasks::PostureTask>(solver(), robot().robotIndex(), 5, 1);
   // postureTask->stiffness(3);
