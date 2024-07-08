@@ -21,6 +21,7 @@ CircularController::CircularController(mc_rbdyn::RobotModulePtr rm, double dt, c
 
   R_=0.15;
   omega_= 3;
+  init_ = false;
 
   postureTask = std::make_shared<mc_tasks::PostureTask>(solver(), robot().robotIndex(), 5, 1);
   // postureTask->stiffness(3);
@@ -36,7 +37,7 @@ CircularController::CircularController(mc_rbdyn::RobotModulePtr rm, double dt, c
 
   solver().addTask(circularTask);
 
-  datastore().make<std::string>("ControlMode", "Torque"); // entree dans le datastore
+  datastore().make<std::string>("ControlMode", "Position"); // entree dans le datastore
   datastore().make_call("getPostureTask", [this]() -> mc_tasks::PostureTaskPtr { return postureTask; });
 
   gui()->addElement(this, {"Control Mode"},
@@ -65,7 +66,9 @@ CircularController::CircularController(mc_rbdyn::RobotModulePtr rm, double dt, c
 bool CircularController::run()
 { 
   ctlTime_ += timeStep;
-  if (start_moving_) { circularTask->positionTask->position(Eigen::Vector3d(0.55, R_*std::sin(omega_*ctlTime_), 0.4 + R_*std::cos(omega_*ctlTime_))),
+  if (ctlTime_ > 3) {init_=true; datastore().assign<std::string>("ControlMode", "Torque");}
+  if (start_moving_ && init_) { 
+    circularTask->positionTask->position(Eigen::Vector3d(0.55, R_*std::sin(omega_*ctlTime_), 0.4 + R_*std::cos(omega_*ctlTime_))),
     circularTask->positionTask->refVel(Eigen::Vector3d(0, R_*omega_*std::cos(omega_*ctlTime_), -R_*omega_*std::sin(omega_*ctlTime_))),
     circularTask->positionTask->refAccel(Eigen::Vector3d(0, -R_*R_*omega_*std::sin(omega_*ctlTime_), R_*R_*omega_*std::cos(omega_*ctlTime_))), 
     circularTask->orientationTask->orientation(Eigen::Quaterniond(0, 1, 0, 1).normalized().toRotationMatrix());}

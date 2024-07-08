@@ -25,6 +25,7 @@ struct CircularController_DLLAPI CircularController : public mc_control::MCContr
 private:
   mc_rtc::Configuration config_;
   bool start_moving_;
+  bool init_;
   double ctlTime_;
   double omega_;
   double R_;
