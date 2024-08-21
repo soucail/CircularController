@@ -19,8 +19,8 @@ CircularController::CircularController(mc_rbdyn::RobotModulePtr rm, double dt, c
   solver().addConstraintSet(contactConstraint);
   solver().addConstraintSet(dynamicsConstraint);
 
-  R_=0.15;
-  omega_= 3;
+  R_=0.25;
+  omega_= 2.5;
   init_ = false;
 
   postureTask = std::make_shared<mc_tasks::PostureTask>(solver(), robot().robotIndex(), 5, 1);
@@ -68,10 +68,10 @@ bool CircularController::run()
 { 
   ctlTime_ += timeStep;
   if (ctlTime_ > 3) {init_=true; datastore().assign<std::string>("ControlMode", "Torque");}
-  if (ctlTime_ > 7.2) {start_moving_=true;postureTask->stiffness(0); postureTask->damping(5);}
-  if (ctlTime_ > 15) {datastore().assign<std::string>("Coriolis", "no");}
+  if (ctlTime_ > 7.2) {start_moving_=true;}
+  // if (ctlTime_ > 15) {datastore().assign<std::string>("Coriolis", "no");}
   if (start_moving_ && init_) { 
-    circularTask->positionTask->position(Eigen::Vector3d(0.55, R_*std::sin(omega_*ctlTime_), 0.4 + R_*std::cos(omega_*ctlTime_))),
+    circularTask->positionTask->position(Eigen::Vector3d(0.60, R_*std::sin(omega_*ctlTime_), 0.25 + R_*std::cos(omega_*ctlTime_))),
     circularTask->positionTask->refVel(Eigen::Vector3d(0, R_*omega_*std::cos(omega_*ctlTime_), -R_*omega_*std::sin(omega_*ctlTime_))),
     circularTask->positionTask->refAccel(Eigen::Vector3d(0, -R_*R_*omega_*std::sin(omega_*ctlTime_), R_*R_*omega_*std::cos(omega_*ctlTime_))), 
     circularTask->orientationTask->orientation(Eigen::Quaterniond(0, 1, 0, 1).normalized().toRotationMatrix());}
