@@ -1,5 +1,6 @@
 #include "CircularController.h"
 #include <Eigen/src/Core/Matrix.h>
+#include <RBDyn/Jacobian.h>
 #include <SpaceVecAlg/PTransform.h>
 #include <cmath>
 #include <ctime>
@@ -20,16 +21,16 @@ CircularController::CircularController(mc_rbdyn::RobotModulePtr rm, double dt, c
   solver().addConstraintSet(dynamicsConstraint);
 
   R_=0.25;
-  omega_= 2.5;
+  omega_= 2.0;
   init_ = false;
-
+  jacobian = rbd::Jacobian(robot().mb(), "end_effector_link");
   postureTask = std::make_shared<mc_tasks::PostureTask>(solver(), robot().robotIndex(), 5, 1);
   // postureTask->stiffness(3);
   // postureTask->damping(5);
   solver().addTask(postureTask);
 
 
-  circularTask = std::make_shared<mc_tasks::EndEffectorTask>(robot().frame("tool_frame"), 20.0, 10000);
+  circularTask = std::make_shared<mc_tasks::EndEffectorTask>(robot().frame("tool_frame"), 60.0, 10000);
   Eigen::VectorXd dimweight(6); 
   dimweight << 1., 1., 1., 1., 1., 1. ; 
   circularTask -> dimWeight(dimweight);
@@ -67,14 +68,20 @@ CircularController::CircularController(mc_rbdyn::RobotModulePtr rm, double dt, c
 bool CircularController::run()
 { 
   ctlTime_ += timeStep;
+
   if (ctlTime_ > 3) {init_=true; datastore().assign<std::string>("ControlMode", "Torque");}
-  if (ctlTime_ > 7.2) {start_moving_=true;}
-  // if (ctlTime_ > 15) {datastore().assign<std::string>("Coriolis", "no");}
+  // if (ctlTime_ > 3) {init_=true;}
+
+  if (ctlTime_ > 6.00) { 
+    circularTask->positionTask->position(Eigen::Vector3d(0.60, 0, 0.25 + R_));
+  }
+  if (ctlTime_ > 9.4) {start_moving_=true;}
   if (start_moving_ && init_) { 
     circularTask->positionTask->position(Eigen::Vector3d(0.60, R_*std::sin(omega_*ctlTime_), 0.25 + R_*std::cos(omega_*ctlTime_))),
     circularTask->positionTask->refVel(Eigen::Vector3d(0, R_*omega_*std::cos(omega_*ctlTime_), -R_*omega_*std::sin(omega_*ctlTime_))),
     circularTask->positionTask->refAccel(Eigen::Vector3d(0, -R_*R_*omega_*std::sin(omega_*ctlTime_), R_*R_*omega_*std::cos(omega_*ctlTime_))), 
     circularTask->orientationTask->orientation(Eigen::Quaterniond(0, 1, 0, 1).normalized().toRotationMatrix());}
+  // if (ctlTime_ > 25.0) {datastore().assign<std::string>("Coriolis", "no");}
 
   auto ctrl_mode = datastore().get<std::string>("ControlMode");
 

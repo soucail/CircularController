@@ -1,5 +1,6 @@
 #pragma once
 
+#include <RBDyn/Jacobian.h>
 #include <SpaceVecAlg/EigenTypedef.h>
 #include <SpaceVecAlg/SpaceVecAlg>
 #include <mc_control/mc_controller.h>
@@ -24,6 +25,7 @@ struct CircularController_DLLAPI CircularController : public mc_control::MCContr
 
 private:
   mc_rtc::Configuration config_;
+  rbd::Jacobian jacobian;
   bool start_moving_;
   bool init_;
   double ctlTime_;
